@@ -15,7 +15,7 @@ var ls = exports.ls = function(dir, cb) {
         console.log(v);
       });
     }
-    if (cb) cb();
+    cb();
   });
 };
 
