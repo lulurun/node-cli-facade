@@ -1,6 +1,6 @@
 {
   "name": "node-cli-facade",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Creating facade for command line execution",
   "main": "index.js",
   "directories": {
