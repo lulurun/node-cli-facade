@@ -1,0 +1,29 @@
+{
+  "name": "node-cli-facade",
+  "version": "0.0.1",
+  "description": "Creating facade for command line execution",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lulurun/node-cli-facade.git"
+  },
+  "keywords": [
+    "cli",
+    "command",
+    "opt",
+    "args",
+    "argv"
+  ],
+  "author": "lulurun@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lulurun/node-cli-facade/issues"
+  },
+  "homepage": "https://github.com/lulurun/node-cli-facade",
+  "dependencies": {
+    "debug": "*"
+  }
+}
