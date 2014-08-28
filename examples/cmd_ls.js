@@ -11,11 +11,11 @@ var ls = exports.ls = function(dir, cb) {
     if (err) {
       throw err; // will be caught by facade
     } else {
-      files.forEach(function(v){
-        console.log(v);
-      });
+      cb({
+        dir: dir,
+        files: files
+      })
     }
-    cb();
   });
 };
 
