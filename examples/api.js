@@ -18,7 +18,7 @@ if (require.main === module) {
     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,HEAD,OPTIONS");
     next();
   });
-  app.use("/api", facade.api.setup());
+  app.use("/api", facade.api.setup(__dirname + '/../lib'));
 
   app.listen(9000, function() {
     console.log('api server started');

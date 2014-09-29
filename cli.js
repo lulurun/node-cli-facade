@@ -2,39 +2,16 @@
 
 var path = require('path');
 var util = require('util');
+var minimist = require('minimist');
+var hogan = require('hogan');
+
 var Facade = require(__dirname + '/facade').Facade;
+var ModuleBase = require(__dirname + '/facade').ModuleBase;
 
 function cliFacade(loadModulePath) {
   cliFacade.super_.call(this, loadModulePath);
 };
 util.inherits(cliFacade, Facade);
-
-cliFacade.prototype.help = function(moduleName){
-  if (!moduleName) {
-    console.log('Usage:');
-    console.log(this.node + ' ' + this.script);
-    console.log('\tPrint this message.');
-    console.log('');
-
-    for (var moduleName in this.modules) {
-      this.help(moduleName);
-    }
-    console.log('');
-  } else {
-    if (!(moduleName in this.modules)) {
-      console.log('Module not found: ' + moduleName);
-      return;
-    }
-    console.log('[Module "' + moduleName + '"] Available commands:');
-    var mod = this.modules[moduleName];
-    for (var funcName in mod.funcs) {
-      var cmdArgs = [this.node, this.script, moduleName,funcName];
-      cmdArgs = cmdArgs.concat(mod.funcs[funcName].args.map(function(v){ return '$' + v; }));
-      console.log('\t' + cmdArgs.join(' '));
-    }
-    console.log('');
-  }
-};
 
 cliFacade.prototype.run = function(argv, cb) {
   this.node = argv.shift();
@@ -42,17 +19,20 @@ cliFacade.prototype.run = function(argv, cb) {
 
   var moduleName = argv.shift();
   if (!moduleName) {
-    this.help();
-    cb();
-  } else {
-    var funcName = argv.shift();
-    if (!funcName) {
-      this.help(moduleName);
-      cb();
-    } else {
-      this.exec(moduleName, funcName, argv, cb);
-    }
+    return this.run([this.node, this.script, 'help', 'all'], cb);
   }
+  var funcName = argv.shift();
+  if (!funcName) {
+    return this.run([this.node, this.script, 'help', 'module', '--name', moduleName], cb);
+  }
+  var options = minimist(argv) || {};
+  this.exec(moduleName, funcName, options, function(func, res){
+    if (func.template) {
+      var template = hogan.compile(func.template);
+      res = template.render(res);
+    }
+    cb(res);
+  });
 };
 
 var run = exports.run = function(loadModulePath, cb) {

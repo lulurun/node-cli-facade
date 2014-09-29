@@ -24,9 +24,11 @@
   },
   "homepage": "https://github.com/lulurun/node-cli-facade",
   "dependencies": {
-    "express": "*",
     "body-parser": "*",
-    "morgan": "*",
-    "debug": "*"
+    "debug": "*",
+    "express": "*",
+    "hogan": "^1.0.2",
+    "minimist": "^1.1.0",
+    "morgan": "*"
   }
 }
