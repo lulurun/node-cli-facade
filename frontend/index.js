@@ -1,0 +1,6 @@
+F({
+  Prefix: {
+    Component: '/',
+    Template: '/',
+  }
+});

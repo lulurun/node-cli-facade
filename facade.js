@@ -1,6 +1,6 @@
 var fs = require('fs');
 var path = require('path');
-
+var util = require('util');
 var debug = require('debug')('cli-facade');
 
 var ModuleBase = exports.ModuleBase = (function(){

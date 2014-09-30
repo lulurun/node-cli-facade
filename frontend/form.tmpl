@@ -1,0 +1,21 @@
+<h3>{{moduleName}}.{{functionName}}</h3>
+<p><a href="#">&laquo; index</a></p>
+<div class="row">
+  <div class="col-sm-6">
+    <div class="form-horizontal" data-id="{{moduleName}}.{{functionName}}">
+      {{#options}}
+      <div class="form-group">
+        <label for="input-{{name}}" class="col-sm-2 control-label">{{name}}</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" data-name="{{name}}" id="input-{{name}}"
+                 value="{{default}}">
+        </div>
+      </div>
+      {{/options}}
+      <button class="btn btn-default btn-exec">Exec</button>
+    </div>
+  </div>
+</div>
+<hr/>
+<div class="row" data-role="component" data-name="result" data-module="{{moduleName}}"
+     data-function="{{functionName}}"></div>
