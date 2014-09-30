@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 if (require.main === module) {
-  var cli = new require('../').cli;
-  cli.run(function(res){
+  var facade = new require(__dirname + '/../');
+  facade.cli.run(__dirname + '/modules', function(res){
     if (res) {
       console.log(res);
     } else {

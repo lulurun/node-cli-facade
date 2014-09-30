@@ -1,5 +1,5 @@
 var util = require('util');
-var ModuleBase = require('../').ModuleBase;
+var ModuleBase = require(__dirname + '/../../').ModuleBase;
 
 exports.ls = (function(){
   var ls = function(){

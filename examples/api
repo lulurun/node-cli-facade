@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+
+if (require.main === module) {
+  var express = require('express');
+  var bodyParser = require('body-parser');
+  var morgan = require('morgan');
+  var serveIndex = require('serve-index');
+  var serveStatic = require('serve-static');
+  var facade = new require(__dirname + '/../');
+
+  var app = express();
+  app.use('/facade', facade.api.setup(__dirname + '/modules', __dirname + '/templates'));
+  app.use('/', serveStatic(__dirname + '/www'));
+
+  app.listen(9000, function() {
+    console.log('api server started');
+  });
+}
