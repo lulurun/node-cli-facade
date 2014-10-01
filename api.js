@@ -22,20 +22,19 @@ apiFacade.prototype.setup = function(templatePath) {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(morgan("combined"));
 
-  if (templatePath) {
-    app.use('/template', serveStatic(templatePath));
-    app.use('/template', serveIndex(templatePath));
-  }
-
   app.use(function(req, res, next){
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,HEAD,OPTIONS");
     next();
   });
 
+  if (templatePath) {
+    app.use('/template', serveStatic(templatePath));
+    app.use('/template', serveIndex(templatePath));
+  }
+
   app.get('/api', function(req, res, next){
     res.redirect('/api/help/all');
-    // next();
   });
 
   app.all('/api/*', function(req, res, next){
@@ -77,14 +76,12 @@ apiFacade.prototype.setup = function(templatePath) {
             process.nextTick(function() {
               self.exec(moduleName, funcName, options, function(func, result){
                 res.json({res:1, data: result});
-                next();
               })
             });
           });
           domain.on('error', function(e) {
             console.error('Error cli:', e);
             res.json({res: 0, err: e});
-            next();
           });
         });
       })(moduleName, funcName, mod[funcName]);
