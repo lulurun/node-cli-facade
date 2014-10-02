@@ -1,18 +1,7 @@
-var util = require('util');
-var ModuleBase = require(__dirname + '/../../').ModuleBase;
-
-exports.ls = (function(){
-  var ls = function(){
-    ModuleBase.call(this);
-  };
-  ls.template = 'Entries in {{dir}}:\n{{#items}}  {{.}}\n{{/items}}';
-  ls.options = {
-    dir: __dirname,
-  };
-
-  util.inherits(ls, ModuleBase);
-
-  ls.prototype.main = function(opt, cb){
+exports.ls = {
+  template: 'Entries in {{dir}}:\n{{#items}}  {{.}}\n{{/items}}',
+  options: { dir: __dirname, },
+  main: function(opt, cb){
     var dir = opt.dir;
     var fs = require('fs');
     fs.readdir(dir, function(err, files) {
@@ -25,10 +14,8 @@ exports.ls = (function(){
         })
       }
     });
-  };
-
-  return ls;
-})();
+  },
+};
 
 exports.facadeModule = true;
 

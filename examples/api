@@ -10,7 +10,9 @@ if (require.main === module) {
 
   var app = express();
   app.use('/', serveStatic(__dirname + '/www'));
-  app.use('/facade', facade.api.setup(__dirname + '/modules', __dirname + '/templates'));
+
+  var apiFacade = facade.api.init(__dirname + '/modules');
+  app.use('/facade', apiFacade.serve(__dirname + '/templates'));
 
   app.listen(9000, function() {
     console.log('api server started');

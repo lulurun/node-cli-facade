@@ -14,7 +14,7 @@ function apiFacade(loadModulePath) {
 };
 util.inherits(apiFacade, Facade);
 
-apiFacade.prototype.setup = function(templatePath) {
+apiFacade.prototype.serve = function(templatePath) {
   var self = this;
   var app = express();
   app.use(bodyParser.json());
@@ -94,10 +94,8 @@ apiFacade.prototype.setup = function(templatePath) {
   return app;
 };
 
-var setup = exports.setup = function(loadModulePath, templatePath) {
+exports.init = function(loadModulePath) {
   loadModulePath = loadModulePath || process.cwd();
-
-  var api = new apiFacade(loadModulePath);
-  return api.setup(templatePath);
+  return new apiFacade(loadModulePath);
 };
 
