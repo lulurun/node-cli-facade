@@ -13,7 +13,7 @@ F('result', F.Component.extend({
     if (!moduleName || !functionName) {
       throw new Error('missing module/function name');
     }
-    var templateQuery = 'template/' + moduleName + '/' + functionName + '.tmpl';
+    var templateQuery = moduleName + '/' + functionName + '.tmpl';
     self.require(templateQuery, function(data){
       self.template = self.F.Template.Compile(data);
       self.data = param.data;

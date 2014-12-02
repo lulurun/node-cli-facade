@@ -14,7 +14,7 @@ function apiFacade(loadModulePath) {
 };
 util.inherits(apiFacade, Facade);
 
-apiFacade.prototype.serve = function(templatePath) {
+apiFacade.prototype.serve = function(options) {
   var self = this;
   var app = express();
   app.use(bodyParser.json());
@@ -28,53 +28,50 @@ apiFacade.prototype.serve = function(templatePath) {
     next();
   });
 
-  if (templatePath) {
-    app.use('/template', serveStatic(templatePath));
-    app.use('/template', serveIndex(templatePath));
+  if (options.templatePath) {
+    // alternative template enabled
+    // putting $module/$func.tmpl in 'options.templatePath' will overwrite the default one
+    app.use('/', serveStatic(options.templatePath));
+  }
+  if (options.serveFrontend) {
+    // serve fractaljs components
+    app.use('/', serveStatic(__dirname + '/frontend'));
   }
 
-  app.get('/api', function(req, res, next){
-    res.redirect('/api/help/all');
-  });
-
-  app.all('/api/*', function(req, res, next){
+  app.all('/*', function(req, res, next){
     res.header('Content-Type', 'application/json');
     next();
   });
 
   for (var moduleName in self.modules) {
     (function(moduleName){
-      app.get('/api/' + moduleName, function(req, res, next){
-        res.redirect('/api/help/module?name=' + moduleName);
+      app.get('/' + moduleName, function(req, res, next){
+        res.redirect(app.mountpath + '/help/module?name=' + moduleName);
       });
     })(moduleName);
 
     var mod = self.modules[moduleName];
     for (var funcName in mod) {
       (function(moduleName, funcName, func){
-        var funcUrl = moduleName + '/' + funcName;
-        app.get('/template/' + funcUrl + '.tmpl', function(req, res, next){
+        var funcUrl = '/' + moduleName + '/' + funcName;
+        app.get(funcUrl + '.tmpl', function(req, res, next){
           if (func.template) {
             res.send('<pre>' + func.template + '</pre>');
           } else {
             res.send(' '); // should not reach here
           }
         });
-        app.all('/api/' + funcUrl, function(req, res, next){
+        app.all(funcUrl, function(req, res, next){
           var options = {};
-          for (var i in func.options) {
-            if (i in req.query) {
-              options[i] = req.query[i];
-            } else if (i in req.body) {
-              options[i] = req.body[i];
-            } else {
-              options[i] = func.options[i];
-            }
-          }
+          for (var i in func.options) options[i] = func.options[i];
+          for (var i in req.query) options[i] = req.query[i];
+          for (var i in req.body) options[i] = req.body[i];
+
           var domain = require('domain').create();
           domain.run(function() {
             process.nextTick(function() {
-              self.exec(moduleName, funcName, options, function(func, result){
+              self.exec(moduleName, funcName, options, function(result){
+                console.log('api exec', moduleName, funcName, result);
                 res.json({res:1, data: result});
               })
             });
@@ -87,9 +84,6 @@ apiFacade.prototype.serve = function(templatePath) {
       })(moduleName, funcName, mod[funcName]);
     }
   }
-
-  app.use('/', serveStatic(__dirname + '/frontend'));
-  app.use('/', serveIndex(__dirname + '/frontend'));
 
   return app;
 };

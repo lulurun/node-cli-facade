@@ -2,76 +2,17 @@ var fs = require('fs');
 var path = require('path');
 var debug = require('debug')('cli-facade');
 
-var createFunction = exports.createFunction = function(main, options, template){
-  return {
-    main: main,
-    options: options,
-    template: template,
-  };
+var createFunction = function(def) {
+  if (typeof(def) === 'function') {
+    return { main: def };
+  } else if (typeof(def) === 'object'){
+    return def;
+  }
+  return null;
 };
 
-var help = (function(){
-  var helpFuncs = function(mod) {    var res = [];
-    for (var i in mod) {
-      var func = mod[i];
-      var funcOptions = func.options || {};
-      var options = [];
-      for (var x in funcOptions) {
-        options.push({
-          name: x,
-          type: typeof(funcOptions[x]),
-        default: funcOptions[x]
-        });
-      }
-      res.push({ name: i, options: options });
-    }
-    return res;
-  };
-
-  return {
-    all: createFunction(
-      function(opt, cb){
-        var res = { node: this.node, script: this.script, modules: [] };
-        for (var i in this.modules) {
-          res.modules.push({moduleName: i, funcs: helpFuncs(this.modules[i])});
-        }
-        cb(res);
-      },
-      {},
-      'Usage:\n' +
-        '{{node}} {{script}} $moduleName $functionName [$options]\n\n' +
-        'Available modules:\n' +
-        '{{#modules}}' +
-        '\n\n' +
-        '[{{moduleName}}]\n' +
-        '{{#funcs}}' +
-        '  {{node}} {{script}} {{moduleName}} {{name}} ' +
-        '{{#options}}--{{name}} ${{name}} {{/options}}\n' +
-        '{{/funcs}}' +
-        '\n' +
-        '{{/modules}}'
-    ),
-    module: createFunction(
-      function(opt, cb){
-        var moduleName = opt.name;
-        if (!(moduleName in this.modules)) throw new Error('unknown module: ' + moduleName);
-        var mod = this.modules[moduleName];
-        var res = { node: this.node, script: this.script, moduleName: moduleName };
-        res.funcs = helpFuncs(mod);
-        cb(res);
-      },
-      { name: '' },
-      'Usage of [{{moduleName}}]:\n' +
-        '{{#funcs}}' +
-        '  {{node}} {{script}} {{moduleName}} {{name}} ' +
-        '{{#options}}--{{name}} ${{name}} {{/options}}\n' +
-        '{{/funcs}}\n'
-    ),
-  };
-})();
-
 exports.Facade = (function(){
-  var loadFiles = function (loadPath) {
+  var loadFiles = function(loadPath) {
     var files = [];
     var ls = fs.readdirSync(loadPath);
     var i = 0, len = ls.length;
@@ -93,7 +34,7 @@ exports.Facade = (function(){
     return files;
   };
 
-  var Facade = function (loadModulePath) {
+  var Facade = function(loadModulePath) {
     this.modules = {};
 
     loadModulePath = path.resolve(loadModulePath);
@@ -110,33 +51,35 @@ exports.Facade = (function(){
       var base = path.basename(r, '.js');
       name = (dir === "." ? "" : dir.replace(/\//g, ".") + ".") + base;
 
-      var funcs = {};
-      for (var i in mod) {
-        var f = mod[i];
-        if (typeof(f) === 'function') {
-          funcs[i] = createFunction(f);
-        } else if (typeof(f === 'object') && f.main && typeof(f.main) === 'function') {
-          funcs[i] = createFunction(f.main, f.options, f.template);
-        }
-      }
-      for (var i in funcs) {
-        this.addModule(name, funcs);
-        break;
-      }
+      this.addModule(name, mod);
     }
-    this.addModule('help', help);
+    this.addModule('help', require(__dirname + '/help'));
   };
 
-  Facade.prototype.addModule = function (name, mod) {
-    debug('loaded module: ' + name);
-    this.modules[name] = mod;
+  Facade.prototype.addModule = function(name, mod) {
+    var funcs = {};
+    for (var j in mod) {
+      var f = createFunction(mod[j]);
+      if (f) { funcs[j] = f; }
+    }
+    for (var x in funcs) {
+      debug('add module: ' + name);
+      this.modules[name] = funcs;
+      return;
+    }
+    debug('no function found in ' + name);
   };
 
-  Facade.prototype.getModule = function (name) {
+  Facade.prototype.getModule = function(name) {
     return this.modules[name];
   };
 
-  Facade.prototype.exec = function (moduleName, funcName, options, cb) {
+  Facade.prototype.getFunction = function(moduleName, functionName) {
+    var mod = this.getModule(moduleName);
+    return mod ? mod[functionName] : null;
+  };
+
+  Facade.prototype.exec = function(moduleName, funcName, options, cb) {
     var mod = this.getModule(moduleName);
     if (mod) {
       if (funcName in mod) {
@@ -145,7 +88,7 @@ exports.Facade = (function(){
           if (!(i in options)) options[i] = f.options[i];
         }
         f.main.bind(this)(options, function(res){
-          cb(f, res);
+          cb(res);
         });
         return;
       }

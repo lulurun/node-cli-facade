@@ -1,0 +1,17 @@
+<h3>Available Functions</h3>
+<ul>
+  {{#modules}}
+  <li><h3>{{moduleName}}</h3>
+    <ul>
+      {{#funcs}}
+      <li>
+      <a href="#{{#env}}{{env}}:{{/env}}form&module={{moduleName}}&func={{name}}">
+        {{moduleName}}.{{name}}
+      </a>
+      </li>
+      {{/funcs}}
+    </ul>
+  </li>
+  {{/modules}}
+</ul>
+

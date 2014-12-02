@@ -3,7 +3,7 @@ F(function(){
     var funcByName = null;
     return function(self, cb){
       if (funcByName) return cb(funcByName);
-      self.require('api/help/all', function(data){
+      self.require('help/all', function(data){
         funcByName = {};
         var modules = data.data.modules;
         modules.forEach(function(m){
