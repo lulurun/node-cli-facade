@@ -27,40 +27,16 @@ apiFacade.prototype.serve = function(options) {
     res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,HEAD,OPTIONS");
     next();
   });
-
-  if (options.templatePath) {
-    // alternative template enabled
-    // putting $module/$func.tmpl in 'options.templatePath' will overwrite the default one
-    app.use('/', serveStatic(options.templatePath));
-  }
-  if (options.serveFrontend) {
-    // serve fractaljs components
-    app.use('/', serveStatic(__dirname + '/frontend'));
-  }
-
   app.all('/*', function(req, res, next){
     res.header('Content-Type', 'application/json');
     next();
   });
 
   for (var moduleName in self.modules) {
-    (function(moduleName){
-      app.get('/' + moduleName, function(req, res, next){
-        res.redirect(app.mountpath + '/help/module?name=' + moduleName);
-      });
-    })(moduleName);
-
     var mod = self.modules[moduleName];
     for (var funcName in mod) {
       (function(moduleName, funcName, func){
         var funcUrl = '/' + moduleName + '/' + funcName;
-        app.get(funcUrl + '.tmpl', function(req, res, next){
-          if (func.template) {
-            res.send('<pre>' + func.template + '</pre>');
-          } else {
-            res.send(' '); // should not reach here
-          }
-        });
         app.all(funcUrl, function(req, res, next){
           var options = {};
           for (var i in func.options) options[i] = func.options[i];
@@ -71,13 +47,11 @@ apiFacade.prototype.serve = function(options) {
           domain.run(function() {
             process.nextTick(function() {
               self.exec(moduleName, funcName, options, function(result){
-                console.log('api exec', moduleName, funcName, result);
                 res.json({res:1, data: result});
               })
             });
           });
           domain.on('error', function(e) {
-            console.error('Error cli:', e);
             res.json({res: 0, err: e});
           });
         });

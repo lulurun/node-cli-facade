@@ -1,18 +1,19 @@
-'use strict';
-var util = require('util');
-var Facade = require(__dirname + '/facade').Facade;
-var hogan = require('hogan');
+"use strict";
+var util = require("util");
+var minimist = require("minimist");
+var Facade = require(__dirname + "/facade").Facade;
+var hogan = require("hogan");
 
 function ViewBase() {};
-ViewBase.prototype.makeData = function(data, callback) { callback(); };
-ViewBase.prototype.getTemplate = function(callback) { callback(); };
-ViewBase.prototype.render = function(data, callback) {
+ViewBase.prototype.makeData = function(data, cb) { cb(); };
+ViewBase.prototype.getTemplate = function(cb) { cb(); };
+ViewBase.prototype.render = function(data, cb) {
   var self = this;
   self.getTemplate(function(){
-    if (!self.template) return callback(data);
+    if (!self.template) return cb(data);
     self.makeData(data, function(){
       var t = hogan.compile(self.template);
-      callback(t.render(self.data || data));
+      cb(t.render(self.data || data));
     });
   });
 };
@@ -24,7 +25,7 @@ function cliFacade(loadModulePath) {
 };
 util.inherits(cliFacade, Facade);
 
-cliFacade.prototype.getView = function(moduleName, functionName) {
+cliFacade.prototype.getView = function(moduleName, funcName) {
   var createViewObj = function(view) {
     var obj = new ViewBase();
     if (view.makeDate) obj.makeData = view.makeData;
@@ -33,48 +34,62 @@ cliFacade.prototype.getView = function(moduleName, functionName) {
     return obj;
   };
 
-  var func = this.getFunction(moduleName, functionName);
+  var func = this.getFunction(moduleName, funcName);
   if (!func) return null;
   if (func.view) return createViewObj(func.view);
-  // TODO, require view.js
+  // TODO, require "view".js
   return null;
 };
 
-cliFacade.prototype.run = function(moduleName, funcName, options, callback) {
+cliFacade.prototype.run = function(options, cb) {
   var self = this;
-  if (!moduleName) {
-    return self.run('help', 'all', {}, callback);
+  if (typeof(options) === "function") {
+    cb = options;
+    options = {};
   }
-  if (!funcName) {
-    return self.run('help', 'module', { name: moduleName }, callback);
+
+  var argv = process.argv.slice(2);
+  // TODO try to avoid passing options.minimist,
+  //      get typeof options from module functions
+  var opt = minimist(argv, options && options.minimist) || {};
+  var moduleName = opt._.shift();
+  var funcName = opt._.shift();
+  if (!moduleName) {
+    moduleName = "help", funcName = "all";
+  } else if (!funcName) {
+    opt.name = moduleName;
+    moduleName = "help", funcName = "module";
   }
 
   var domain = require('domain').create();
   domain.run(function() {
     process.nextTick(function() {
-      self.exec(moduleName, funcName, options, function(res){
+      var func = self.getFunction(moduleName, funcName);
+      if (func && func.hidden)
+        throw { err: "Hidden Function", module: moduleName, func: funcName };
+      self.exec(func, opt, function(res){
         var view = self.getView(moduleName, funcName);
         if (view) {
           res = view.render(res, function(res){
-            callback(null, res);
+            cb(null, res);
           });
         } else {
-          callback(null, res);
+          cb(null, res);
         }
       });
     });
   });
   domain.on('error', function(e) {
-    callback(e);
+    cb(e);
   });
 };
 
 exports.getOrCreateFacade = (function(){
   var myFacade = null;
-  return function(loadModulePath, cb){
+  return function(loadModulePath){
     if (!myFacade) {
       myFacade = new cliFacade(loadModulePath);
     }
-    cb(myFacade);
+    return myFacade;
   };
 })();

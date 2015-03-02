@@ -2,6 +2,7 @@ var helpFuncs = function(mod) {
   var res = [];
   for (var i in mod) {
     var func = mod[i];
+    if (func.hidden) continue;
     var funcOptions = func.options || {};
     var options = [];
     for (var x in funcOptions) {
@@ -16,15 +17,27 @@ var helpFuncs = function(mod) {
   return res;
 };
 
+var isHidden = function(mod) {
+  var hidden = true;
+  for (var i in mod) {
+    if (!mod[i].hidden) {
+      hidden = false;
+      break;
+    }
+  }
+  return hidden;
+};
+
 exports.all = {
   main: function(opt, cb){
     var res = { node: this.node, script: this.script, modules: [] };
     for (var i in this.modules) {
-      res.modules.push({moduleName: i, funcs: helpFuncs(this.modules[i])});
+      var mod = this.modules[i];
+      if (!isHidden(mod))
+        res.modules.push({ moduleName: i, funcs: helpFuncs(mod) });
     }
     cb(res);
   },
-  options: {},
   view: {
     template: 'Usage:\n' +
       '{{node}} {{script}} $moduleName $functionName [$options]\n\n' +
@@ -43,10 +56,11 @@ exports.all = {
 
 exports.module = {
   main: function(opt, cb){
-    var moduleName = opt.name;
-    if (!(moduleName in this.modules)) throw new Error('unknown module: ' + moduleName);
-    var mod = this.modules[moduleName];
-    var res = { node: this.node, script: this.script, moduleName: moduleName };
+    var name = opt.name;
+    if (!(name in this.modules) || isHidden(this.modules[name]))
+      throw new Error('unknown module: ' + name);
+    var mod = this.modules[name];
+    var res = { node: this.node, script: this.script, moduleName: name };
     res.funcs = helpFuncs(mod);
     cb(res);
   },

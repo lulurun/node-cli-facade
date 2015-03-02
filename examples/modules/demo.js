@@ -1,5 +1,7 @@
 exports.ls = {
-  template: 'Entries in {{dir}}:\n{{#items}}  {{.}}\n{{/items}}',
+  view: {
+    template: 'Entries in {{dir}}:\n{{#items}}  {{.}}\n{{/items}}',
+  },
   options: { dir: __dirname, },
   main: function(opt, cb){
     var dir = opt.dir;
@@ -14,6 +16,19 @@ exports.ls = {
         })
       }
     });
+  },
+};
+
+// ////////
+// ./cli demo printOpts --a 1 --b 2 --c 5.0 --ver 5.0
+exports.printOpts = function(opt, cb) {
+  cb(opt);
+};
+
+exports.hiddenFunction = {
+  hidden: true,
+  main: function(){
+    throw new Error("I am hidden");
   },
 };
 

@@ -38,7 +38,6 @@ exports.Facade = (function(){
     this.modules = {};
 
     loadModulePath = path.resolve(loadModulePath);
-    var modules = {};
     debug('load cli modules from ' + loadModulePath);
     var files = loadFiles(loadModulePath);
     var i = 0, len = files.length;
@@ -60,6 +59,7 @@ exports.Facade = (function(){
     var funcs = {};
     for (var j in mod) {
       var f = createFunction(mod[j]);
+      if (mod.facadeModule && mod.facadeModule.hidden) f.hidden = true;
       if (f) { funcs[j] = f; }
     }
     for (var x in funcs) {
@@ -74,26 +74,29 @@ exports.Facade = (function(){
     return this.modules[name];
   };
 
-  Facade.prototype.getFunction = function(moduleName, functionName) {
+  Facade.prototype.getFunction = function(moduleName, funcName) {
     var mod = this.getModule(moduleName);
-    return mod ? mod[functionName] : null;
+    return mod ? mod[funcName] : null;
   };
 
   Facade.prototype.exec = function(moduleName, funcName, options, cb) {
-    var mod = this.getModule(moduleName);
-    if (mod) {
-      if (funcName in mod) {
-        var f = mod[funcName];
-        for (var i in f.options) {
-          if (!(i in options)) options[i] = f.options[i];
-        }
-        f.main.bind(this)(options, function(res){
-          cb(res);
-        });
-        return;
-      }
+    var func = null;
+    if (typeof(moduleName) === "object") {
+      cb = options;
+      options = funcName;
+      func = moduleName;
+    } else {
+      func = this.getFunction(moduleName, funcName);
     }
-    throw { err: 'Not Found', module: moduleName, func: funcName };
+    if (!func)
+      throw { err: "Not Found", module: moduleName, func: funcName };
+
+    for (var i in func.options) {
+      if (!(i in options)) options[i] = func.options[i];
+    }
+    func.main.bind(this)(options, function(res){
+      cb(res);
+    });
   };
 
   return Facade;
