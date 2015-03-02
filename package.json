@@ -27,7 +27,7 @@
     "body-parser": "*",
     "debug": "*",
     "express": "*",
-    "hogan": "*",
+    "hogan.js": "*",
     "minimist": "*",
     "morgan": "*",
     "serve-index": "*",

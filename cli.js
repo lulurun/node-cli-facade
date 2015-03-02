@@ -2,7 +2,7 @@
 var util = require("util");
 var minimist = require("minimist");
 var Facade = require(__dirname + "/facade").Facade;
-var hogan = require("hogan");
+var hogan = require("hogan.js");
 
 function ViewBase() {};
 ViewBase.prototype.makeData = function(data, cb) { cb(); };

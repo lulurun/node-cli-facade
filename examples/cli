@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 var CLI = new require(__dirname + '/../').cli;
-CLI.getOrCreateFacade(__dirname + '/modules', function(facade){
-  facade.run({minimist: {string: ["ver"]}}, function(err, res){
-    if (err) {
-      console.error(err);
-    } else {
-      console.log(res);
-    }
-  });
+var facade = CLI.getOrCreateFacade(__dirname + '/modules');
+facade.run({minimist: {string: ["ver"]}}, function(err, res){
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(res);
+  }
 });
+
