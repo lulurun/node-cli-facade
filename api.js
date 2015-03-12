@@ -3,10 +3,6 @@
 var util = require('util');
 var express = require('express');
 var bodyParser = require('body-parser');
-var morgan = require('morgan');
-var serveIndex = require('serve-index');
-var serveStatic = require('serve-static');
-
 var Facade = require(__dirname + '/facade').Facade;
 
 function apiFacade(loadModulePath) {
@@ -14,19 +10,13 @@ function apiFacade(loadModulePath) {
 };
 util.inherits(apiFacade, Facade);
 
-apiFacade.prototype.serve = function(options) {
+apiFacade.prototype.createApp = function(opt) {
+  opt = opt || {};
   var self = this;
   var app = express();
   app.use(bodyParser.json());
   app.use(bodyParser.text());
   app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(morgan("combined"));
-
-  app.use(function(req, res, next){
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,HEAD,OPTIONS");
-    next();
-  });
   app.all('/*', function(req, res, next){
     res.header('Content-Type', 'application/json');
     next();
@@ -36,6 +26,8 @@ apiFacade.prototype.serve = function(options) {
     var mod = self.modules[moduleName];
     for (var funcName in mod) {
       (function(moduleName, funcName, func){
+        var sync = (!opt.async || moduleName === 'help');
+
         var funcUrl = '/' + moduleName + '/' + funcName;
         app.all(funcUrl, function(req, res, next){
           var options = {};
@@ -47,13 +39,26 @@ apiFacade.prototype.serve = function(options) {
           domain.run(function() {
             process.nextTick(function() {
               self.exec(moduleName, funcName, options, function(result){
-                res.json({res:1, data: result});
+                if (sync) {
+                  res.json({data: result});
+                } else {
+                  // TODO log result
+                  console.log(result);
+                }
               })
             });
           });
           domain.on('error', function(e) {
-            res.json({res: 0, err: e});
+            // TODO log error message
+            console.log(e);
+            if (sync) {
+              res.json({err: e.message});
+            }
           });
+
+          if (!sync) {
+            res.json({accepted: 1});
+          }
         });
       })(moduleName, funcName, mod[funcName]);
     }
@@ -62,8 +67,12 @@ apiFacade.prototype.serve = function(options) {
   return app;
 };
 
-exports.init = function(loadModulePath) {
-  loadModulePath = loadModulePath || process.cwd();
-  return new apiFacade(loadModulePath);
-};
-
+exports.getOrCreateFacade = (function(){
+  var myFacades = {};
+  return function(loadModulePath){
+    if (!myFacades[loadModulePath]) {
+      myFacades[loadModulePath] = new apiFacade(loadModulePath);
+    }
+    return myFacades[loadModulePath];
+  };
+})();

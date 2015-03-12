@@ -85,11 +85,11 @@ cliFacade.prototype.run = function(options, cb) {
 };
 
 exports.getOrCreateFacade = (function(){
-  var myFacade = null;
+  var myFacades = {};
   return function(loadModulePath){
-    if (!myFacade) {
-      myFacade = new cliFacade(loadModulePath);
+    if (!myFacades[loadModulePath]) {
+      myFacades[loadModulePath] = new cliFacade(loadModulePath);
     }
-    return myFacade;
+    return myFacades[loadModulePath];
   };
 })();
