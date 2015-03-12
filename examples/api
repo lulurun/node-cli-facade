@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+var express = require("express");
+var API = new require(__dirname + "/../").api;
+
+var app = express();
+app.use(
+  '/api',
+  API.getOrCreateFacade(__dirname + "/modules").createApp()
+);
+
+app.listen(9000, function() {
+  console.log("api server started, port:", 9000);
+  console.log("getting help:");
+  console.log("curl http://127.0.0.1:9000/api/help/all");
+  console.log("");
+});
